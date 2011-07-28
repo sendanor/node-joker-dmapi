@@ -1,0 +1,20 @@
+{
+  "name": "joker-dmapi",
+  "description": "Joker.com DMAPI client library",
+  "version": "0.0.1",
+  "homepage": "http://github.com/jheusala/node-joker-dmapi",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jheusala/node-joker-dmapi.git"
+  },
+  "author": "Jaakko-Heikki Heusala <jheusala@iki.fi> (http://www.jhh.me)",
+  "main": "lib/joker-dmapi.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
