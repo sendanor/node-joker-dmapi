@@ -1,0 +1,43 @@
+Status-Code: 0
+Account-Balance: 1234.56
+Version: 1.2.19
+UID: 1234
+Session-Timeout: 3600
+Session-Count: 1
+Status-Text: OK
+Auth-Sid: 23a6e15522ea63d73c1830d3426fc312
+
+mobi
+name
+net.uk
+vc
+ag
+or.at
+info
+me
+mn
+me.uk
+net
+lc
+tel
+com
+asia
+biz
+ltd.uk
+org
+at
+plc.uk
+de
+cc
+tv
+co.at
+bz
+us
+hn
+co.uk
+eu
+nl
+cn
+org.uk
+sc
+
