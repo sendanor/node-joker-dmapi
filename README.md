@@ -16,7 +16,7 @@ Simplest way to install is to use [npm](http://npmjs.org/), just simply `npm ins
 License
 -------
 
-MIT-style license, see [INSTALL.txt](http://github.com/jheusala/js-snippets/blob/master/LICENSE.txt).
+MIT-style license, see [INSTALL.txt](http://github.com/jheusala/node-joker-dmapi/blob/master/LICENSE.txt).
 
 Usage
 -----
