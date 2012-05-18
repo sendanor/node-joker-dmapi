@@ -1,7 +1,7 @@
 {
   "name": "joker-dmapi",
   "description": "Joker.com DMAPI client library",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "http://github.com/jheusala/node-joker-dmapi",
   "repository": {
     "type": "git",
