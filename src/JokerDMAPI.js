@@ -29,6 +29,7 @@
  */
 
 var q = require('q');
+var is = require('nor-is');
 var debug = require('nor-debug');
 var util = require("util");
 var events = require("events");
@@ -86,14 +87,22 @@ JokerDMAPI.prototype._exec = function JokerDMAPI_prototype__exec (name, args) {
 	return q.fcall(function JokerDMAPI_prototype__exec_ () {
 
 		var deferred = q.defer();
+
 		var msg = querystring.stringify(args);
+
+		//debug.log('msg = ', msg);
+
 		var options = {
 			'host': my._config.host || 'dmapi.joker.com',
 			'port': my._config.port || 443,
 			'path': '/request/'+name,
 			'method': 'POST',
-			'headers':{'Content-length':msg.length}
+			'headers':{
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Content-length': msg.length
+			}
 		};
+
 		var data = '';
 
 		var req = https.request(options, function JokerDMAPI_prototype__exec_request (res) {
@@ -133,9 +142,13 @@ JokerDMAPI.prototype.login = function JokerDMAPI_prototype_login (args) {
 	debug.assert(args).is('object');
 	var opts = args.hasOwnProperty('api-key') ? {'api-key': args['api-key']} : {'username':args.username, 'password':args.password};
 	return my._exec('login', opts).then(function JokerDMAPI_prototype_login_ (response) {
+		//debug.log('response = ', response);
 		var auth_id = response.headers['auth-sid'];
 		var uid = response.headers.uid;
 		var tlds = response.body.split("\n");
+		debug.assert(auth_id).is('string');
+		debug.assert(uid).is('string');
+		debug.assert(tlds).is('array');
 		my._config.auth_id = auth_id;
 		return {'auth_id':auth_id, 'uid':uid, 'tlds':tlds};
 	});
@@ -152,7 +165,14 @@ JokerDMAPI.prototype.logout = function JokerDMAPI_prototype_logout (args) {
 	});
 };
 
-/* query-domain-list */
+/* query-domain-list
+ * @params args.pattern Pattern to match (glob-like)
+ * @params args.from Pattern to match (glob-like)
+ * @params args.to End by this
+ * @params args.showstatus {boolean}
+ * @params args.showgrants {boolean}
+ * @params args.showjokerns {boolean}
+ */
 JokerDMAPI.prototype['query-domain-list'] = function JokerDMAPI_prototype_query_domain_list (args) {
 	var my = this;
 	args = args || {};
@@ -160,21 +180,93 @@ JokerDMAPI.prototype['query-domain-list'] = function JokerDMAPI_prototype_query_
 	if (!my._config.auth_id) {
 		throw new Error("No auth_id. Try login first.");
 	}
+
 	opts['auth-sid'] = ''+my._config.auth_id;
-	foreach(['pattern', 'from', 'to', 'showstatus', 'showgrants']).each(function JokerDMAPI_prototype_query_domain_list_ (key) {
+
+	['pattern', 'from', 'to', 'showstatus', 'showgrants', 'showjokerns'].forEach(function JokerDMAPI_prototype_query_domain_list_ (key) {
 		if (args.hasOwnProperty(key)) {
-			opts[key] = ''+args[key];
+			if (is.boolean(args[key])) {
+				opts[key] = args[key] ? '1' : '0';
+			} else {
+				opts[key] = ''+args[key];
+			}
 		}
 	});
-	if (opts.showstatus !== '1') { opts.showstatus = '0'; }
-	if (opts.showgrants !== '1') { opts.showgrants = '0'; }
+
+	var showstatus = opts.showstatus === '1';
+	var showgrants = opts.showgrants === '1';
+	var showjokerns = opts.showjokerns === '1';
+
+	if (!showstatus) { opts.showstatus = '0'; }
+	if (!showgrants) { opts.showgrants = '0'; }
+	if (!showjokerns) { opts.showjokerns = '0'; }
+
+	//debug.log('opts = ', opts);
+
+	/** Parse single line */
+	function parse_jokerns (line) {
+		debug.assert(line).is('string');
+		if (! ((line === '1') || (line === '0')) ) {
+			throw new TypeError('Failed to parse jokerns: ' + line);
+		}
+		return line === '1';
+	}
+
+	/** Parse single line */
+	function parse_domain (line) {
+		debug.assert(line).is('string');
+
+		// -S-G-J ==> "tili-lii.fi 2017-06-02"
+		// +S-G-J ==> "tili-lii.fi 2017-06-02 lock"
+		// +S+G-J ==> "tili-lii.fi 2017-06-02 lock @creator true 0 undef"
+		// -S+G-J ==> "tili-lii.fi 2017-06-02 @creator true 0 undef"
+		// -S-G+J ==> "tili-lii.fi 2017-06-02 0"
+		// +S+G+J ==> "tili-lii.fi 2017-06-02 lock @creator true 0 undef 0"
+
+		//debug.log('line = "' + line + '"');
+
+		var tmp = line.split(' ');
+
+		//debug.log('tmp = ', tmp);
+
+		var domain = tmp.shift();
+		var exp_date = tmp.shift();
+
+		var obj = {
+			'domain': domain,
+			'expiration': exp_date
+		};
+
+		debug.assert(obj.domain).is('string');
+		debug.assert(obj.expiration).is('string');
+
+		if (showstatus) {
+			obj.status = tmp.shift().split(',');
+			debug.assert(obj.status).is('array');
+		}
+
+		if (showjokerns) {
+			obj.jokerns = parse_jokerns(tmp.pop());
+			debug.assert(obj.jokerns).is('boolean');
+		}
+
+		if (showgrants) {
+			obj.grants = tmp.join(' ');
+			debug.assert(obj.grants).is('string');
+		}
+
+		if (tmp.length !== 0) {
+			throw new TypeError("Failed to parse everything: " + tmp.join(','));
+		}
+
+		//debug.log("obj = ", obj);
+		return obj;
+	}
+
 	return my._exec('query-domain-list', opts).then(function JokerDMAPI_prototype_query_domain_list_2 (response) {
+		debug.assert(response).is('object');
 		var domains = response.body;
-
-		// FIXME: Prepare domains into array
-		debug.log("domains = ", domains);
-
-		return domains;
+		return domains.split('\n').map(parse_domain);
 	});
 };
 

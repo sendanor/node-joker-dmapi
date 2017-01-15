@@ -1,13 +1,13 @@
+"use strict";
 
-var config = require('./config.js'),
-    dmapi = require('joker-dmapi'),
+var debug = require('nor-debug');
+var config = require('./config.json');
+var dmapi = require('joker-dmapi');
 
-dmapi.on('error', function(err) {
-	console.log("Error: " + err);
-});
-
-dmapi.login({'username':config.username, 'password':config.password}, function(session) {
-	session.queryDomainList(function(domains) {
-		
-	});
-});
+dmapi.login({'api-key':config['api-key']}).then(function() {
+	return dmapi.queryDomainList({'showstatus':true, 'showgrants': false, 'showjokerns': false});
+}).then(function(domains) {
+	debug.log('domains = ', domains);
+}).fail(function(err) {
+	debug.error('Error: ', err);
+}).done();
