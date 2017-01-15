@@ -2,7 +2,11 @@
   "name": "joker-dmapi",
   "description": "Joker.com DMAPI client library",
   "version": "1.0.0",
+  "main": "src/index.js",
   "homepage": "http://github.com/jheusala/node-joker-dmapi",
+  "scripts": {
+    "jshint": "jshint src/"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/jheusala/node-joker-dmapi.git"
@@ -16,7 +20,8 @@
     "node": "*"
   },
   "dependencies": {
-    "snippets" : "*"
+    "jshint": "^2.9.4",
+    "snippets": "*"
   },
   "devDependencies": {}
 }
