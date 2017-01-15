@@ -1,11 +1,11 @@
 /* 
  * Joker.com DMAPI client library
- * http://github.com/jheusala/node-joker-dmapi
- * Version 0.0.1
+ * http://github.com/sendanor/node-joker-dmapi
+ * Version 1.0.0
  */
 
 /*
- * Copyright (C) 2011 by Jaakko-Heikki Heusala <jheusala@iki.fi>
+ * Copyright (C) 2011-2017 by Jaakko-Heikki Heusala <jheusala@iki.fi>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of 
  * this software and associated documentation files (the "Software"), to deal in 
@@ -26,20 +26,24 @@
  * SOFTWARE.
  */
 
-var util = require("util"),
-    events = require("events");
+var q = require('q');
+var debug = require('nor-debug');
+var util = require("util");
+var events = require("events");
 
+/** Returns true if `f` is function */
 function is_func(f) {
 	if(f && (typeof f === 'function')) return true;
 	return false;
 }
 
-/* Initialize callback function with error argument */
+/** Initialize callback function with error argument */
 function init_err_fn(f) {
 	if(is_func(f)) return f;
 	return function(err) { if(err) console.log('Error: ' + err); };
 }
 
+/** */
 function create_basic_func(user_fun) {
 	if(!is_func(user_fun)) throw new Exception('create_basic_func() must have one function as an argument!');
 	var new_fun = function(args, fn) {
@@ -59,7 +63,7 @@ function create_basic_func(user_fun) {
 	return new_fun;
 }
 
-/* Constructor */
+/** Constructor */
 function JokerDMAPI () {
 	if(!(this instanceof arguments.callee)) return new (arguments.callee)(args);
 	var my = this;
@@ -140,8 +144,14 @@ JokerDMAPI.prototype.exec = function(name, args, callback) {
 
 /* Login */
 JokerDMAPI.prototype.login = create_basic_func(function(args, fn) {
-	var my = this, args = args || {}, 
-	    fn = init_err_fn(fn);
+	var my = this;
+	var args = args || {};
+	var fn = init_err_fn(fn);
+
+	debug.assert(my).is('object');
+	debug.assert(args).is('object');
+	debug.assert(fn).is('function');
+
 	my.exec('login', {'username':args.username, 'password':args.password}, function(err, response) {
 		if(err) return fn(err);
 		var auth_id = response.headers['auth-sid'],
